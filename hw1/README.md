@@ -1,3 +1,11 @@
+I used my initial implementation of IBM Model II for Michael Collins's [coursera
+lecture](https://www.coursera.org/course/nlangp).
+
+Usage:
+
+    python modelII.py < input > output
+
+_______________________
 There are three Python programs here (`-h` for usage):
 
  - `./align` aligns words using Dice's coefficient.
