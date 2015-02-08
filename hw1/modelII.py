@@ -10,7 +10,7 @@ tokens = {}
 t = {}
 esptokens = set()
 q = {}
-EPOCH=20
+EPOCH=50
 
 def initialize(in_file_name):
 	in_lines = [line.strip() for line in open(in_file_name)]
@@ -18,8 +18,8 @@ def initialize(in_file_name):
 	ger_lines = []
 	en_lines = []
 	for line in in_lines:
-		l1 = line.split('|||')[1].strip().split()
-		l2 = line.split('|||')[0].strip().split()
+		l1 = [ tok.lower() for tok in line.split('|||')[1].strip().split()]
+		l2 = [ tok.lower() for tok in line.split('|||')[0].strip().split()]
 
 		ger_lines.append(l2)
 		en_lines.append(l1)
