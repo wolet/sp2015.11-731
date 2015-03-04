@@ -1,3 +1,25 @@
+### Neural Models for MT Evaluation
+
+Here's the solution:
+
+- A vanilla RNN and a RNN with Gated Recurrent Unit (GRU) is trained to get 3 sentence representations
+- These representations are fed to a softmax layer to predict {-1,0,1}
+
+Other details:
+
+- sentences are tokenized with ptb tokenizer script written in sed
+- you need a theano installation to run the code
+- In small dataset(2K sentences) it achieves ~ %90 accuracy(= able to overfit).
+- Since I do not use GPU and mini-batch training it is *very* slow.
+- the code is mutated from RNN/LSTM tagger very quickly, that's why it's impossible to read.
+- you have to prepare a benchmark pkl.gz to run the code. I provide a link to the half of the training set I use. To run prediction on whole training set you need to use *prepare_benchmark.sh*. Then run:
+
+     python rnn_mt_eval_benchmark.py --benchmark mt_eval-half.pkl.gz --test-benchmark mt_eval-full-glove50.pkl.gz --lrate 0.5 --epoch 25 --with-lstm --val-freq 26208
+
+- The following command line parameters *do not* work: [dim,num-seq,max-length,vector-file,train-file,lm-mode,lr-decay]
+
+### Below is Original Readme
+
 There are three Python programs here (`-h` for usage):
 
  - `./evaluate` evaluates pairs of MT output hypotheses relative to a reference translation using counts of matched words

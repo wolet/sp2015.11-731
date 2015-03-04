@@ -1,2 +1,9 @@
 _site/
 .sass-cache/
+test.*
+*.pkl.gz
+sentiment.*
+*.pyc
+*.conll.*
+*.tok.*
+dev.*
