@@ -14,7 +14,7 @@ Other details:
 - the code is mutated from RNN/LSTM tagger very quickly, that's why it's impossible to read.
 - you have to prepare a benchmark pkl.gz to run the code. I provide a [link](https://www.dropbox.com/s/epqfjru9kwbbcps/mt_eval-half.pkl.gz) to the half of the training set I use. To run prediction on whole training set you need to use *prepare_benchmark.sh*. Then run:
 
-     python rnn_mt_eval_benchmark.py --benchmark mt_eval-half.pkl.gz --test-benchmark mt_eval-full-glove50.pkl.gz --lrate 0.5 --epoch 25 --with-lstm --val-freq 26208
+      python rnn_mt_eval_benchmark.py --benchmark mt_eval-half.pkl.gz --test-benchmark mt_eval-full-glove50.pkl.gz --lrate 0.5 --epoch 25 --with-lstm --val-freq 26208
 
 - The following command line parameters *do not* work: [dim,num-seq,max-length,vector-file,train-file,lm-mode,lr-decay]
 
