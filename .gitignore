@@ -6,4 +6,5 @@ sentiment.*
 *.pyc
 *.conll.*
 *.tok.*
+*.labels.*
 dev.*

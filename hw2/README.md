@@ -12,7 +12,7 @@ Other details:
 - In small dataset(2K sentences) it achieves ~ %90 accuracy(= able to overfit).
 - Since I do not use GPU and mini-batch training it is *very* slow.
 - the code is mutated from RNN/LSTM tagger very quickly, that's why it's impossible to read.
-- you have to prepare a benchmark pkl.gz to run the code. I provide a link to the half of the training set I use. To run prediction on whole training set you need to use *prepare_benchmark.sh*. Then run:
+- you have to prepare a benchmark pkl.gz to run the code. I provide a [link](https://www.dropbox.com/s/epqfjru9kwbbcps/mt_eval-half.pkl.gz) to the half of the training set I use. To run prediction on whole training set you need to use *prepare_benchmark.sh*. Then run:
 
      python rnn_mt_eval_benchmark.py --benchmark mt_eval-half.pkl.gz --test-benchmark mt_eval-full-glove50.pkl.gz --lrate 0.5 --epoch 25 --with-lstm --val-freq 26208
 
