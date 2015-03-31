@@ -5,13 +5,18 @@ import models
 import heapq
 from collections import namedtuple
 
+def pop_phrase(skips):
+    for i in range(len(skips)):
+        yield skips[i], skips[:i] + skips[i + 1:]
+
 parser = argparse.ArgumentParser(description='Simple phrase based decoder.')
 parser.add_argument('-i', '--input', dest='input', default='data/input', help='File containing sentences to translate (default=data/input)')
 parser.add_argument('-t', '--translation-model', dest='tm', default='data/tm', help='File containing translation model (default=data/tm)')
-parser.add_argument('-s', '--stack-size', dest='s', default=1, type=int, help='Maximum stack size (default=1)')
+parser.add_argument('-s', '--stack-size', dest='s', default=10, type=int, help='Maximum stack size (default=10)')
+parser.add_argument('-j', '--max-skip', dest='max_s', default=25, type=int, help='Maximum-jumps (default=25)')
 parser.add_argument('-n', '--num_sentences', dest='num_sents', default=sys.maxint, type=int, help='Number of sentences to decode (default=no limit)')
 parser.add_argument('-l', '--language-model', dest='lm', default='data/lm', help='File containing ARPA-format language model (default=data/lm)')
-parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False,  help='Verbose mode (default=off)')
+parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False,	help='Verbose mode (default=off)')
 opts = parser.parse_args()
 
 tm = models.TM(opts.tm, sys.maxint)
@@ -19,45 +24,69 @@ lm = models.LM(opts.lm)
 sys.stderr.write('Decoding %s...\n' % (opts.input,))
 input_sents = [tuple(line.strip().split()) for line in open(opts.input).readlines()[:opts.num_sents]]
 
-hypothesis = namedtuple('hypothesis', 'logprob, lm_state, predecessor, phrase')
+#hypothesis = namedtuple('hypothesis', 'logprob, lm_state, predecessor, phrase, flags')
+hypothesis = namedtuple('hypothesis', 'logprob, lm_state, skip, e_phrase, f_phrase, predecessor')
+max_s = opts.max_s
+max_p = 10
+initial_hypothesis = hypothesis(0.0, lm.begin(), (), None, None, None)
 for f in input_sents:
-    # The following code implements a DP monotone decoding
-    # algorithm (one that doesn't permute the target phrases).
-    # Hence all hypotheses in stacks[i] represent translations of 
-    # the first i words of the input sentence.
-    # HINT: Generalize this so that stacks[i] contains translations
-    # of any i words (remember to keep track of which words those
-    # are, and to estimate future costs)
-    initial_hypothesis = hypothesis(0.0, lm.begin(), None, None)
 
-    stacks = [{} for _ in f] + [{}]
-    stacks[0][lm.begin()] = initial_hypothesis
-    for i, stack in enumerate(stacks[:-1]):
-        # extend the top s hypotheses in the current stack
-        for h in heapq.nlargest(opts.s, stack.itervalues(), key=lambda h: h.logprob): # prune
-            for j in xrange(i+1,len(f)+1):
-                if f[i:j] in tm:
-                    for phrase in tm[f[i:j]]:
-                        logprob = h.logprob + phrase.logprob
-                        lm_state = h.lm_state
-                        for word in phrase.english.split():
-                            (lm_state, word_logprob) = lm.score(lm_state, word)
-                            logprob += word_logprob
-                        logprob += lm.end(lm_state) if j == len(f) else 0.0
-                        new_hypothesis = hypothesis(logprob, lm_state, h, phrase)
-                        if lm_state not in stacks[j] or stacks[j][lm_state].logprob < logprob: # second case is recombination
-                            stacks[j][lm_state] = new_hypothesis 
+	stacks = [[ {} for _ in range(max_s +1)] for _ in range(len(f) + 1)]
+	stacks[0][0][(lm.begin(),())] = hypothesis(0.0, lm.begin(), (), None, None, None)
 
-    # find best translation by looking at the best scoring hypothesis
-    # on the last stack
-    winner = max(stacks[-1].itervalues(), key=lambda h: h.logprob)
-    def extract_english_recursive(h):
-        return '' if h.predecessor is None else '%s%s ' % (extract_english_recursive(h.predecessor), h.phrase.english)
-    print extract_english_recursive(winner)
+	for i, n_stack in enumerate(stacks[:-1]):
+		for n_skip, stack in reversed(list(enumerate(n_stack))):
+			for h in heapq.nlargest(opts.s, stack.itervalues(), key=lambda h: h.logprob):
+				for j in xrange(i+1, min( i+max_p,len(f) ) + 1):
+					f_phrase  = f[i:j]
+					for e_phrase in tm.get(f_phrase, ()):
+						logprob = h.logprob + e_phrase.logprob
+						lm_state = h.lm_state
+						for word in e_phrase.english.split():
+							(lm_state, word_logprob) = lm.score(lm_state, word)
+							logprob += word_logprob
+						if j == len(f) and n_skip == 0:
+							logprob += lm.end(lm_state)
+						new_h = hypothesis(logprob,lm_state,h.skip,e_phrase,f_phrase,h)
+						if (lm_state,new_h.skip) not in stacks[j][len(new_h.skip)] or stacks[j][len(new_h.skip)][(lm_state,new_h.skip)].logprob < logprob:
+							stacks[j][len(new_h.skip)][(lm_state,new_h.skip)] = new_h
+				if n_skip < max_s:
+					for j in xrange(i+1,min(i+max_p,len(f)) + 1):
+						f_phrase = f[i:j]
+						for e_phrase in tm.get(f_phrase, ()):
+							logprob = h.logprob + e_phrase.logprob
+							lm_state = h.lm_state
+							skip = h.skip + ((e_phrase,f_phrase),)
+							new_h = hypothesis(logprob,lm_state,skip,None,None,h)
+							if (lm_state,new_h.skip) not in stacks[j][len(new_h.skip)] or stacks[j][len(new_h.skip)][(lm_state,new_h.skip)].logprob < logprob:
+								stacks[j][len(new_h.skip)][(lm_state,new_h.skip)] = new_h
 
-    if opts.verbose:
-        def extract_tm_logprob(h):
-            return 0.0 if h.predecessor is None else h.phrase.logprob + extract_tm_logprob(h.predecessor)
-        tm_logprob = extract_tm_logprob(winner)
-        sys.stderr.write('LM = %f, TM = %f, Total = %f\n' % 
-            (winner.logprob - tm_logprob, tm_logprob, winner.logprob))
+#				for (e_phrase,f_phrase),left_out in pop_phrase(h.skip):
+				for ii,_ in enumerate(h.skip):
+					(e_phrase,f_phrase) = h.skip[ii]
+					left_out = h.skip[:ii] + h.skip[ii + 1:]
+					logprob = h.logprob
+					lm_state = h.lm_state
+					for word in e_phrase.english.split():
+						(lm_state, word_logprob) = lm.score(lm_state, word)
+						logprob += word_logprob
+					if i == len(f) and len(left_out) == 0:
+						logprob += lm.end(lm_state)
+					new_h = hypothesis(logprob,lm_state,left_out,e_phrase,f_phrase,h)
+					if (lm_state,new_h.skip) not in stacks[i][len(new_h.skip)] or stacks[i][len(new_h.skip)][(lm_state,new_h.skip)].logprob < logprob:
+						stacks[i][len(new_h.skip)][(lm_state,new_h.skip)] = new_h
+
+	winner = max(stacks[-1][0].itervalues(), key=lambda h: h.logprob)
+#	print >> sys.stderr, "DEBUG:",winner.logprob, winner.predecessor
+	def extract_english_recursive(h):
+		return '' if h.predecessor is None else '%s%s ' % (extract_english_recursive(h.predecessor), ('' if h.e_phrase is None else h.e_phrase.english))
+	print extract_english_recursive(winner)
+
+	sys.stderr.write('.')
+	if opts.verbose:
+		def extract_tm_logprob(h):
+			return 0.0 if h.predecessor is None else h.e_phrase.logprob + extract_tm_logprob(h.predecessor)
+		tm_logprob = extract_tm_logprob(winner)
+		sys.stderr.write('LM = %f, TM = %f, Total = %f\n' % 
+			(winner.logprob - tm_logprob, tm_logprob, winner.logprob))
+

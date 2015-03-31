@@ -1,3 +1,9 @@
+Implemented IBM constraints of [this paper](http://www.aclweb.org/anthology/C04-1030).
+
+type `-h` to see options.
+
+
+
 There are three Python programs here (`-h` for usage):
 
  - `./decode` a simple non-reordering (monotone) phrase-based decoder
