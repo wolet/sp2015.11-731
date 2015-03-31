@@ -5,10 +5,6 @@ import models
 import heapq
 from collections import namedtuple
 
-def pop_phrase(skips):
-    for i in range(len(skips)):
-        yield skips[i], skips[:i] + skips[i + 1:]
-
 parser = argparse.ArgumentParser(description='Simple phrase based decoder.')
 parser.add_argument('-i', '--input', dest='input', default='data/input', help='File containing sentences to translate (default=data/input)')
 parser.add_argument('-t', '--translation-model', dest='tm', default='data/tm', help='File containing translation model (default=data/tm)')
@@ -61,7 +57,6 @@ for f in input_sents:
 							if (lm_state,new_h.skip) not in stacks[j][len(new_h.skip)] or stacks[j][len(new_h.skip)][(lm_state,new_h.skip)].logprob < logprob:
 								stacks[j][len(new_h.skip)][(lm_state,new_h.skip)] = new_h
 
-#				for (e_phrase,f_phrase),left_out in pop_phrase(h.skip):
 				for ii,_ in enumerate(h.skip):
 					(e_phrase,f_phrase) = h.skip[ii]
 					left_out = h.skip[:ii] + h.skip[ii + 1:]
