@@ -65,8 +65,7 @@ def convertData(tr_,val_,te_,vector_file,max_length,num_seq,dim,weight):
 	L = np.zeros((num_seq),dtype=theano.config.floatX)
 
 	tag_set = TwoWayDict()
-	tag_set['O'] = 1
-	tag_id = 2
+	tag_id = 0
 	s = []
 	s_id = 0
 
@@ -170,11 +169,16 @@ def convertData(tr_,val_,te_,vector_file,max_length,num_seq,dim,weight):
 	dataset = (TRAIN,VALIDATION,TEST)
 	out_data = (dim,tag_id,tag_set,dataset)
 
+	print "DEBUG tagset:",tag_set
 	return out_data
 
-def dumpDataset(out_data,outfile):
+def dumpDataset(out_data,outfile, zipped = False):
 
-	out = gzip.open(out_file,'wb')
+	if zipped:
+		out = gzip.open(out_file,'wb')
+	else:
+		out = open(out_file,'wb')
+
 	pickle.dump(out_data,out)
 	out.close()
 usage="""
@@ -199,3 +203,4 @@ if __name__ == "__main__":
 	dumpDataset(dataset,out_file)
 
 #python ../src/convertData.py tac-coarse-compressed.train tac-coarse-compressed.dev tac-coarse-compressed.test ../src/glove6B-50-lowercase.pkl.gz 107 2217 50 tac-coarse-compressed.glove6B-50.pkl.gz 1 
+# python convertData.py data/sent_1.conll data/sent_2.conll data/sent_3.conll glove6B.pkl.gz 141 78624 50 mt_eval-full-glove50new.pkl 1

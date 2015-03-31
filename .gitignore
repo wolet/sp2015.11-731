@@ -8,3 +8,6 @@ sentiment.*
 *.tok.*
 *.labels.*
 dev.*
+*eval.*
+hw2/*
+hw1/*
