@@ -1,3 +1,17 @@
+Thinks I have tried:
+
+- using an LM to generate probability distribution over phrase's slot.
+- using that distribution I take weighted average of word vectors ==> context vectors
+- I use pre-trained vectors, context vector  and ttable probabilities as features
+- baseline : I trained perceptron-like model 
+- I trained multilayer perceptron model with different non-linearities (relu,tanh,sigmoid)
+- loss is margin based (gold translation >= best_predicted + margin)
+
+
+
+
+
+
 There are three Python programs here (`-h` for usage):
 
  - `./rerank` a simple reranker that simply sorts candidate translations on log p(czech|english)
